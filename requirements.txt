@@ -1,0 +1,4 @@
+# Python 3.10+
+pandas>=2.2                    # limpeza e transformacao
+mysql-connector-python>=9.0    # conexao e carga no MySQL
+pytest>=8.0                    # testes das funcoes de limpeza
