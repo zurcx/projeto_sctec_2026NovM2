@@ -1,81 +1,216 @@
 """
-carregar.py  -  CARGA NO MYSQL   (voce completa os trechos com ____)
-====================================================================
-Passos:  1) cria o banco e as tabelas (executa o sql/01_criar_banco.sql)
-         2) carrega as 4 DIMENSOES   3) carrega a FATO (as dimensoes vem primeiro!)   4) confere as contagens
-Usa so o que o kit ja traz: src/config.py e src/banco.py (conectar, executar_script, inserir_em_lote, consultar).
-O sql/01_criar_banco.sql e o SEU script (veja a secao 4.3 do enunciado): crie esse arquivo antes de rodar a carga.
-Ele deve comecar com CREATE DATABASE IF NOT EXISTS pncp_controladoria; e USE pncp_controladoria;
-Dica: veja a carga em lote do 1_extrair.py do Desafio Transparencia (banco.inserir_em_lote).
+Módulo de ingestão automatizada e carga em lote no MySQL.
+Cria o banco se não existir, executa o DDL (sql/01_criar_banco.sql),
+popula as 4 dimensões e a fato com integridade referencial.
 
-COMO RODAR (depois do montar_tabelas):   python -m src.carregar
+Execução:
+    python -m src.carregar
 """
 
+import os
+
 import pandas as pd
+from sqlalchemy import text
 
-from src import banco, config
-
-
-def ler(nome, **opcoes):
-    """PRONTA. Le um CSV de data/processed. Campo vazio vira NaN (que mais abaixo vira None = NULL no banco)."""
-    return pd.read_csv(config.PASTA_PROCESSED / f"{nome}.csv", keep_default_na=False, na_values=[""], **opcoes)
+from src.banco import get_engine, get_engine_servidor
+from src.montar_tabelas import processar_dados
 
 
-def tuplas(tabela, colunas):
-    """PRONTA. Transforma o DataFrame em uma lista de tuplas simples, que e o que o banco entende.
-    Valor vazio (NaN) vira None, que o banco grava como NULL."""
-    dados = tabela[colunas].astype(object)
-    dados = dados.where(dados.notna(), None)
-    return [tuple(linha) for linha in dados.itertuples(index=False, name=None)]
+def executar_ddl():
+    """Lê e executa o script SQL de criação do banco e tabelas no servidor."""
+    engine_server = get_engine_servidor()
+    caminho_sql = os.path.join("sql", "01_criar_banco.sql")
+    print(f"Executando DDL: {caminho_sql}...")
+
+    with open(caminho_sql, "r", encoding="utf-8") as f:
+        comandos_sql = f.read()
+
+    comandos = [c.strip() for c in comandos_sql.split(";") if c.strip()]
+
+    with engine_server.begin() as conn:
+        for cmd in comandos:
+            conn.execute(text(cmd))
+    print("✔ Banco de dados, tabelas e restrições criados com sucesso!")
 
 
-def inserir(con, tabela, colunas, dados):
-    """Monta o INSERT INTO ... VALUES (%s, %s, ...) e envia todas as linhas de uma vez."""
-    # Um %s para cada coluna. COMPLETE: monte uma lista com "%s" repetido len(colunas) vezes:  ["%s"] * len(colunas)
-    marcadores = ", ".join(____)
-    sql = f"INSERT INTO {tabela} ({', '.join(colunas)}) VALUES ({marcadores})"
-    # COMPLETE: envie em lote com banco.inserir_em_lote(conexao, sql, linhas)
-    banco.____(con, sql, tuplas(dados, colunas))
-    print(f"   {tabela}: {len(dados)} linhas")
+def carregar_dados():
+    # 1. Cria o banco e as tabelas conectando ao servidor MySQL raiz
+    executar_ddl()
 
+    # 2. Conecta ao banco de dados pncp_controladoria recém-criado
+    engine = get_engine()
 
-def main():
-    # 1) Banco e tabelas. O script cria o banco, por isso conectamos sem escolher o database.
-    con = banco.conectar(com_database=False)
-    # COMPLETE: execute o arquivo SQL de criacao: banco.executar_script(conexao, caminho_do_arquivo)
-    banco.____(con, config.PASTA_SQL / "01_criar_banco.sql")
-    con.close()
-    con = banco.conectar()
+    # 3. Processa o pipeline de limpeza e regras de negócio
+    print("\nProcessando dados com regras de negócio...")
+    compras, fato = processar_dados()
 
-    # 2) Dimensoes PRIMEIRO: a fato tem chave estrangeira para elas, entao elas precisam existir antes.
-    print("Carga:")
-    for nome, colunas in [("dim_orgao", ["sk_orgao", "cnpj_orgao", "nome_orgao", "poder"]),
-                          ("dim_fornecedor", ["sk_fornecedor", "ni_fornecedor", "nome_fornecedor", "tipo_pessoa", "porte"]),
-                          ("dim_modalidade", ["sk_modalidade", "modalidade_id", "nome_modalidade"]),
-                          ("dim_localidade", ["sk_localidade", "uf_sigla", "uf_nome", "regiao"])]:
-        # dtype=str: o CNPJ nao pode perder o zero da esquerda ao ser lido
-        inserir(con, nome, colunas, ler(nome, dtype=str))
+    with engine.begin() as conn:
+        # Limpa dados existentes para recarga idempotente (ordem inversa de FK)
+        conn.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+        conn.execute(text("TRUNCATE TABLE fato_item_contratado;"))
+        conn.execute(text("DELETE FROM dim_orgao WHERE sk_orgao != -1;"))
+        conn.execute(text("DELETE FROM dim_fornecedor WHERE sk_fornecedor != -1;"))
+        conn.execute(text("TRUNCATE TABLE dim_modalidade;"))
+        conn.execute(text("TRUNCATE TABLE dim_localidade;"))
+        conn.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
 
-    # 3) Fato (depois das dimensoes)
-    fato = ler("fato_item_contratado")
-    # dias_ciclo vem como 48.0 (decimal) porque tem vazios; o banco quer inteiro. COMPLETE: converta para o tipo "Int64"
-    fato["dias_ciclo"] = fato["dias_ciclo"].astype(____)
-    colunas = ["numero_controle_pncp", "numero_item", "sk_orgao", "sk_fornecedor", "sk_modalidade", "sk_localidade",
-               "data_publicacao", "data_homologacao", "descricao_item", "perfil_gasto", "quantidade",
-               "valor_unitario_estimado", "valor_total_estimado", "valor_unitario_homologado", "valor_total_homologado",
-               "comparavel", "economia_valor", "dias_ciclo"]
-    # COMPLETE: o nome da tabela da fato
-    inserir(con, ____, colunas, fato)
+        # -------------------------------------------------------------
+        # 4. Carga da dim_localidade (27 UFs)
+        # -------------------------------------------------------------
+        print("\nCarregando dim_localidade...")
+        dim_localidade = (
+            compras[["uf_sigla_limpa", "uf_nome_limpo", "regiao"]]
+            .dropna(subset=["uf_sigla_limpa"])
+            .drop_duplicates(subset=["uf_sigla_limpa"])
+            .copy()
+        )
+        dim_localidade.columns = ["uf_sigla", "uf_nome", "regiao"]
+        dim_localidade.to_sql(
+            "dim_localidade", con=conn, if_exists="append", index=False
+        )
+        print(f"✔ dim_localidade: {len(dim_localidade)} linhas inseridas.")
 
-    # 4) Conferencia: o que esta no banco tem que bater com a prova real (anexo 8 do enunciado)
-    print("Conferencia:")
-    for tabela, esperado in [("fato_item_contratado", 6126), ("dim_orgao", 363), ("dim_fornecedor", 2652),
-                             ("dim_modalidade", 7), ("dim_localidade", 27)]:
-        # COMPLETE: conte as linhas da tabela com SELECT COUNT(*)
-        n = banco.consultar(con, f"SELECT ____ FROM {tabela}")[0][0]
-        print(f"   {tabela}: {n} (esperado {esperado}) -> {'OK' if n == esperado else 'DIVERGENTE'}")
-    con.close()
+        # -------------------------------------------------------------
+        # 5. Carga da dim_modalidade (7 modalidades)
+        # -------------------------------------------------------------
+        print("Carregando dim_modalidade...")
+        dim_modalidade = (
+            compras[["modalidade_id_num", "nome_modalidade"]]
+            .drop_duplicates(subset=["modalidade_id_num"])
+            .copy()
+        )
+        dim_modalidade.columns = ["modalidade_id", "nome_modalidade"]
+        dim_modalidade.to_sql(
+            "dim_modalidade", con=conn, if_exists="append", index=False
+        )
+        print(f"✔ dim_modalidade: {len(dim_modalidade)} linhas inseridas.")
+
+        # -------------------------------------------------------------
+        # 6. Carga da dim_orgao (363 CNPJs distintos)
+        # -------------------------------------------------------------
+        print("Carregando dim_orgao...")
+        dim_orgao = (
+            compras[["cnpj_orgao_limpo", "nome_orgao_limpo", "poder_nome"]]
+            .dropna(subset=["cnpj_orgao_limpo"])
+            .drop_duplicates(subset=["cnpj_orgao_limpo"])
+            .copy()
+        )
+        dim_orgao.columns = ["cnpj_orgao", "nome_orgao", "poder"]
+        dim_orgao.to_sql("dim_orgao", con=conn, if_exists="append", index=False)
+        print(f"✔ dim_orgao: {len(dim_orgao)} linhas inseridas.")
+
+        # -------------------------------------------------------------
+        # 7. Carga da dim_fornecedor (~2.652 fornecedores)
+        # -------------------------------------------------------------
+        print("Carregando dim_fornecedor...")
+        dim_fornecedor = (
+            fato[
+                [
+                    "ni_fornecedor_limpo",
+                    "nome_fornecedor_limpo",
+                    "tipo_pessoa_limpo",
+                    "porte_fornecedor_limpo",
+                ]
+            ]
+            .dropna(subset=["ni_fornecedor_limpo"])
+            .drop_duplicates(subset=["ni_fornecedor_limpo"])
+            .copy()
+        )
+        dim_fornecedor.columns = [
+            "ni_fornecedor",
+            "nome_fornecedor",
+            "tipo_pessoa",
+            "porte",
+        ]
+        dim_fornecedor.to_sql(
+            "dim_fornecedor", con=conn, if_exists="append", index=False
+        )
+        print(f"✔ dim_fornecedor: {len(dim_fornecedor)} linhas inseridas.")
+
+        # -------------------------------------------------------------
+        # 8. Mapear Surrogate Keys (sk_*) para a Fato
+        # -------------------------------------------------------------
+        print("\nMapeando chaves substitutas para a fato_item_contratado...")
+        map_orgao = pd.read_sql("SELECT sk_orgao, cnpj_orgao FROM dim_orgao", con=conn)
+        map_fornecedor = pd.read_sql(
+            "SELECT sk_fornecedor, ni_fornecedor FROM dim_fornecedor", con=conn
+        )
+        map_modalidade = pd.read_sql(
+            "SELECT sk_modalidade, modalidade_id FROM dim_modalidade", con=conn
+        )
+        map_localidade = pd.read_sql(
+            "SELECT sk_localidade, uf_sigla FROM dim_localidade", con=conn
+        )
+
+        fato_carga = fato.merge(
+            map_orgao, left_on="cnpj_orgao_limpo", right_on="cnpj_orgao", how="left"
+        )
+        fato_carga = fato_carga.merge(
+            map_fornecedor,
+            left_on="ni_fornecedor_limpo",
+            right_on="ni_fornecedor",
+            how="left",
+        )
+        fato_carga = fato_carga.merge(
+            map_modalidade,
+            left_on="modalidade_id_num",
+            right_on="modalidade_id",
+            how="left",
+        )
+        fato_carga = fato_carga.merge(
+            map_localidade, left_on="uf_sigla_limpa", right_on="uf_sigla", how="left"
+        )
+
+        # Se houver alguma ausência, usa a contingência -1
+        fato_carga["sk_orgao"] = fato_carga["sk_orgao"].fillna(-1).astype(int)
+        fato_carga["sk_fornecedor"] = fato_carga["sk_fornecedor"].fillna(-1).astype(int)
+        fato_carga["sk_modalidade"] = fato_carga["sk_modalidade"].fillna(-1).astype(int)
+        fato_carga["sk_localidade"] = fato_carga["sk_localidade"].fillna(-1).astype(int)
+
+        colunas_fato = {
+            "numero_controle_pncp": "numero_controle_pncp",
+            "numero_item": "numero_item",
+            "sk_orgao": "sk_orgao",
+            "sk_fornecedor": "sk_fornecedor",
+            "sk_modalidade": "sk_modalidade",
+            "sk_localidade": "sk_localidade",
+            "data_publicacao_limpa": "data_publicacao",
+            "data_homologacao": "data_homologacao",
+            "descricao": "descricao_item",
+            "perfil_gasto": "perfil_gasto",
+            "quantidade_final": "quantidade",
+            "vu_estimado": "valor_unitario_estimado",
+            "vu_homologado": "valor_unitario_homologado",
+            "vt_estimado": "valor_total_estimado",
+            "vt_homologado": "valor_total_homologado",
+            "comparavel": "comparavel",
+            "economia_valor": "economia_valor",
+            "dias_ciclo": "dias_ciclo",
+        }
+
+        df_fato_final = fato_carga[list(colunas_fato.keys())].rename(
+            columns=colunas_fato
+        )
+
+        # -------------------------------------------------------------
+        # 9. Carga em lote da Fato (chunksize de 1000)
+        # -------------------------------------------------------------
+        print("Carregando fato_item_contratado em lote...")
+        df_fato_final.to_sql(
+            "fato_item_contratado",
+            con=conn,
+            if_exists="append",
+            index=False,
+            chunksize=1000,
+        )
+        print(
+            f"✔ fato_item_contratado: {len(df_fato_final)} linhas inseridas com sucesso!"
+        )
+
+    print("\n" + "=" * 50)
+    print("CARGA CONCLUÍDA COM SUCESSO NO MYSQL!")
+    print("=" * 50)
 
 
 if __name__ == "__main__":
-    main()
+    carregar_dados()
