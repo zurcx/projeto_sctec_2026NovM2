@@ -1,5 +1,7 @@
 # Dashboard Executivo: Inteligência de Compras PNCP (Power BI)
 
+![Imagem resultado tratativa de dados](img/dashboard.png)
+
 ##  Visão Geral do Projeto
 
 Este projeto entrega um dashboard executivo limpo, profissional e responsivo em formato 16:9, desenvolvido no Power BI com foco na auditoria e análise de dados de compras públicas do **PNCP (Portal Nacional de Contratações Públicas)**. Desenhado especificamente para a Controladoria e alta gestão (C-level), o painel destaca volumes de contratação, concentração de fornecedores e eficiência de preços através de um layout em três níveis, totalmente livre de barras de rolagem.
@@ -7,6 +9,9 @@ Este projeto entrega um dashboard executivo limpo, profissional e responsivo em 
 ![Imagem resultado tratativa de dados](img/screenshot-20261020-212509.png)
 
 ## Estrutura e Layout do Dashboard
+
+
+
 
 O dashboard está estruturado em três blocos visuais principais otimizados para leitura executiva rápida:
 
