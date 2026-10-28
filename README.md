@@ -6,29 +6,6 @@ Este projeto entrega um dashboard executivo limpo, profissional e responsivo em 
 
 ![Imagem resultado tratativa de dados](img/screenshot-20261020-212509.png)
 
-##  Arquitetura Visual e Mockup do Painel
-
-Abaixo está a representação visual da estrutura do layout em 16:9 adotada no projeto, projetada para evitar qualquer necessidade de scroll vertical ou horizontal em monitores corporativos
-
-
-
-```
-+-----------------------------------------------------------------------+
-|  [KPI 1: Volume Total]   [KPI 2: % Deságio Médio]   [KPI 3: Fornecedores] |
-+-----------------------------------------------------------------------+
-| Volume Homologado por Modalidade    | Top 6 Fornecedores + "Outros"   |
-| (Barra Horizontal)                  | (Barra Horizontal Ordenada)     |
-|                                     |                                 |
-|                                     |                                 |
-+-------------------------------------+---------------------------------+
-| Deságio vs. Média Geral (p.p.) - Comparativo por Modalidade (Base)    |
-| [Colunas Verticais]                                                   |
-+-----------------------------------------------------------------------+
-
-```
-
-> *Nota de Implementação de Imagem:* Para inserir capturas de tela reais no Power BI, utilize imagens em formato `.png` compactadas (resolução recomendada: 1920x1080 em modo de encaixe "Ajustar") inseridas diretamente na tela de fundo do Power BI Canvas.
-
 ## Estrutura e Layout do Dashboard
 
 O dashboard está estruturado em três blocos visuais principais otimizados para leitura executiva rápida:
