@@ -1,6 +1,6 @@
 # Dashboard Executivo: Inteligência de Compras PNCP (Power BI)
 
-![Imagem resultado tratativa de dados](img/dashboard.png)
+![Imagem DashBoard](img/DashBoard.png)
 
 ##  Visão Geral do Projeto
 
