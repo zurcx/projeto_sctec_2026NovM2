@@ -105,7 +105,7 @@ RETURN
 
 O desenvolvimento deste painel foi planejado e executado em 3 Sprints de 1 semana cada, focando na entrega iterativa de valor para a Controladoria:
 
-![Imagem simulação sprint](img/sprints.png)
+![Imagem resultado tratativa de dados](img/Sprints.png)
 
 ### 🟢 Sprint 1: Fundação, Ingestão e Modelo de Dados (Semana 1)
 
