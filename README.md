@@ -101,7 +101,7 @@ RETURN
 
 ```
 
-## Simulação de Sprints (Metodologia Ágil)
+## Sprints (Metodologia Ágil)
 
 O desenvolvimento deste painel foi planejado e executado em 3 Sprints de 1 semana cada, focando na entrega iterativa de valor para a Controladoria:
 
