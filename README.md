@@ -4,11 +4,11 @@
 
 Este projeto entrega um dashboard executivo limpo, profissional e responsivo em formato 16:9, desenvolvido no Power BI com foco na auditoria e análise de dados de compras públicas do **PNCP (Portal Nacional de Contratações Públicas)**. Desenhado especificamente para a Controladoria e alta gestão (C-level), o painel destaca volumes de contratação, concentração de fornecedores e eficiência de preços através de um layout em três níveis, totalmente livre de barras de rolagem.
 
+![Imagem resultado tratativa de dados](img/screenshot-20261020-212509.png)
+
 ##  Arquitetura Visual e Mockup do Painel
 
-Abaixo está a representação visual da estrutura do layout em 16:9 adotada no projeto, projetada para evitar qualquer necessidade de scroll vertical ou horizontal em monitores corporativos:
-
-
+Abaixo está a representação visual da estrutura do layout em 16:9 adotada no projeto, projetada para evitar qualquer necessidade de scroll vertical ou horizontal em monitores corporativos
 
 
 
