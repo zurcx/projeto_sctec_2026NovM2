@@ -29,11 +29,11 @@ O dashboard está estruturado em três blocos visuais principais otimizados para
   
 ## Perguntas do negocio
 
--- ==============================================================================
+
 -- PROJETO AVALIATIVO - MÓDULO 2
 -- Ficheiro: sql/02_perguntas.sql
 -- Objetivo: Respostas formais às 6 Perguntas de Negócio da Controladoria
--- ==============================================================================
+
 
 USE pncp_controladoria;
 
