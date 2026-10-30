@@ -188,6 +188,11 @@ dim_fornecedor (1) -------< fato_item_contratado (*)
 
 * **`fato_item_contratado`**: Tabela transacional de itens contratados capturando valores estimados, valores homologados e métricas de desempenho.
 
+
+## Diagrama
+
+![Imagem resultado tratativa de dados](img/Diagrama.png)
+
 ## Principais Cálculos DAX e Otimizações
 
 ### 1. Volume Homologado
