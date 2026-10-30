@@ -27,7 +27,7 @@ O dashboard está estruturado em três blocos visuais principais otimizados para
 
    * **Deságio vs. Média Geral (p.p.) (Gráfico de Barras Verticais):** Avalia o desempenho de desconto por modalidade de contratação comparado à linha de base global.
   
-## Perguntas do negocio
+## Perguntas do Negocio
 
 
 -- PROJETO AVALIATIVO - MÓDULO 2
