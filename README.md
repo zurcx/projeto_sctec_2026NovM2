@@ -27,6 +27,21 @@ O dashboard está estruturado em três blocos visuais principais otimizados para
 
    * **Deságio vs. Média Geral (p.p.) (Gráfico de Barras Verticais):** Avalia o desempenho de desconto por modalidade de contratação comparado à linha de base global.
   
+## Relatório de Insights Executivos: Auditoria de Contratações PNCP
+Este documento sintetiza os principais insights analíticos extraídos do dashboard executivo de controladoria das contratações públicas (PNCP), estruturados para suporte à tomada de decisão de nível C-Level e auditoria preventiva.
+
+1. Eficiência de Preços e Deságio Global (Economia Real)
+    • Desempenho Geral de Competitividade: O volume total homologado evidencia uma forte capacidade de geração de economia real por meio dos processos licitatórios auditados. A taxa média de deságio demonstra que a disputa de preços entrega margens eficientes em relação aos orçamentos estimados iniciais.
+    • Disparidade entre Modalidades:
+        ◦ O Pregão Eletrônico consolida-se como o principal instrumento de eficiência econômica, alavancando a competitividade e gerando deságios expressivos acima da média geral.
+        ◦ As modalidades sem disputa de mercado (Inexigibilidades e Dispensas) registram deságio nominal nulo, operando estritamente junto ao teto estimado, o que reforça a necessidade de auditoria prévia rigorosa nas pesquisas de preços de mercado.
+2. Concentração de Mercado e Gestão de Riscos (Fornecedores)
+    • Efeito Concentração (Risco de Dependência): A análise de concentração por fornecedor aponta que uma parcela significativa do volume financeiro repousa sobre um grupo restrito de parceiros comerciais (com destaque para grandes fornecedores de infraestrutura e serviços especializados).
+    • Diretriz de Mitigação: Alta dependência de fornecedores específicos eleva o risco de descontinuidade operacional. Recomenda-se à controladoria o monitoramento contínuo da execução contratual e a adoção de estratégias para ampliar a atratividade de novos concorrentes nas futuras licitações publicadas no PNCP.
+3. Oportunidades de Otimização e Alertas de Auditoria
+    • Validação de Preços em Inexigibilidades: Devido à ausência de competição natural, o risco de sobrepreço nestes processos exige auditorias focadas na validação de notas fiscais anteriores, tabelas referenciais oficiais e atestados de exclusividade.
+    • Gatilhos para Auditoria Preventiva: A utilização do indicador de desvio em relação à média geral (pp) serve como um mecanismo preditivo automatizado: licitações que fujam drasticamente do padrão estatístico de deságio da categoria devem ser sinalizadas automaticamente para revisão de conformidade prévia à homologação.
+  
 ## Perguntas do Negocio
 
 
